@@ -26,7 +26,7 @@ import { Request, Response } from 'express';
  *                     description: The user's name
  *                     example: John Doe
  */
-export const getUsers = (req: Request, res: Response) => {
+export const getUsers = (_req: Request, res: Response) => {
     const users = [
         { id: 1, name: 'John Doe' },
         { id: 2, name: 'Jane Doe' }
