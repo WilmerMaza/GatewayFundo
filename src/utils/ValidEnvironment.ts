@@ -9,8 +9,8 @@ function getEnvironmentVariable(name: string): string {
   return value;
 }
 
- export const JWT_SECRET = getEnvironmentVariable("JWT_SECRET");
- export const urlServeAuth = getEnvironmentVariable("urlServeAuth");
-// export const urlMongoDBN = getEnvironmentVariable("urlMongoDBN");
- export const PORT = getEnvironmentVariable("PORT");
-// export const timeJWT = getEnvironmentVariable("timeJWT");
+export const JWT_SECRET = getEnvironmentVariable("JWT_SECRET");
+export const urlServeAuth = getEnvironmentVariable("urlServeAuth");
+export const urlServeCronometer = getEnvironmentVariable("urlServeCronometer");
+export const urlServeRegister = getEnvironmentVariable("urlServeRegister");
+export const PORT = getEnvironmentVariable("PORT");
