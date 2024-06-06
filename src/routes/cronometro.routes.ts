@@ -14,13 +14,19 @@ const router = Router();
  *   - url: 'https://api.tuservidor.com/'
  *     description: Servidor de producción
  * paths:
- *   /cronometro/{event}/{partidaId}:
+ *   /cronometro/{platform}/{event}/{partidaId}:
  *     post:
  *       tags:
  *         - Cronometro
  *       summary: Controla eventos del cronómetro para una partida específica
  *       description: Permite iniciar, pausar o detener un cronómetro basado en la acción y el ID de la partida proporcionados.
  *       parameters:
+ *         - in: path
+ *           name: platform
+ *           required: true
+ *           schema:
+ *             type: string
+ *           description: Tipo de plataforma (cronometro, platform, Movil).
  *         - in: path
  *           name: event
  *           required: true
@@ -81,14 +87,14 @@ const router = Router();
  *                     example: 'Error procesando la solicitud.'
  *
  */
-router.post("/:event/:partidaId", async (req: Request, res: Response) => {
+router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
-      params: { event, partidaId },
+      params: { event, partidaId,platform },body
     } = req;
     const response = await cronometerService.post(
-      `/${event}/${partidaId}`,
-      req.body
+      `/${platform}/${event}/${partidaId}`,
+      body
     );
     res.json(response.data);
   } catch (error: any) {
@@ -107,7 +113,7 @@ router.post("/:event/:partidaId", async (req: Request, res: Response) => {
  *   - url: 'https://api.tuservidor.com/'
  *     description: Servidor de producción
  * paths:
- *   /cronometro/{partidaId}:
+ *   /cronometro/{platform}/{partidaId}:
  *     get:
  *       tags:
  *         - Cronometro
@@ -115,6 +121,12 @@ router.post("/:event/:partidaId", async (req: Request, res: Response) => {
  *       description: >
  *         Abre un stream de Server-Sent Events que emite actualizaciones del cronómetro en tiempo real para una partida específica.
  *       parameters:
+ *         - in: path
+ *           name: platform
+ *           required: true
+ *           schema:
+ *             type: string
+ *           description: Tipo de plataforma (cronometro, platform, Movil).
  *         - in: path
  *           name: partidaId
  *           required: true
@@ -156,8 +168,8 @@ router.post("/:event/:partidaId", async (req: Request, res: Response) => {
  * 
  */
 
-router.get("/:partidaId", async (req: Request, res: Response) => {
-  const { partidaId } = req.params; // Destructuring simplificado
+router.get("/:platform/:partidaId", async (req: Request, res: Response) => {
+  const { platform, partidaId } = req.params; // Destructuring simplificado
 
   // Configuración inicial de los headers para SSE
   res.setHeader("Content-Type", "text/event-stream");
@@ -166,7 +178,7 @@ router.get("/:partidaId", async (req: Request, res: Response) => {
 
   try {
     // Conectarse al servicio que maneja los SSE y obtener el stream
-    const response = await getSSE(`/${partidaId}`, {
+    const response = await getSSE(`/${platform}/${partidaId}`, {
       responseType: "stream", // Asegura que Axios maneje la respuesta como un stream
     });
 

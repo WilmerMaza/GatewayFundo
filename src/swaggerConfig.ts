@@ -10,7 +10,7 @@ const swaggerDefinition = {
     },
     servers: [
         {
-            url: 'http://gateway.micovid.online',
+            url: 'https://gateway.micovid.online',
         },
     ],
 };
