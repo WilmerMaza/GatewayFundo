@@ -13,16 +13,22 @@ const router = Router();
  *       type: object
  *       required:
  *         - Name
+ *         - LastName
  *         - Numero_Sorteo
  *         - Birthdate
  *         - IwfCoiCode
  *         - Primer_Envion
  *         - Primer_Arranque
+ *         - Id_Partida
  *       properties:
  *         Name:
  *           type: string
  *           description: Nombre del deportista
- *           example: "Wilmer Maza"
+ *           example: "Wilmer"
+ *         LastName:
+ *           type: string
+ *           description: Apellido del deportista
+ *           example: "Perez"
  *         Numero_Sorteo:
  *           type: integer
  *           description: Número de sorteo del deportista
@@ -44,6 +50,10 @@ const router = Router();
  *           type: integer
  *           description: Primer arranque del deportista
  *           example: 10
+ *         Id_Partida:
+ *           type: string
+ *           description: Código de competición / Partida
+ *           example: "BUPL0PY"
  * 
  *     AthleteResponse:
  *       type: object
@@ -59,10 +69,18 @@ const router = Router();
  *               type: string
  *               description: ID del deportista
  *               example: "245dd285-535d-4331-98d0-de4f31665cca"
+ *             Id_Partida:
+ *               type: string
+ *               description: Código de competición / Partida
+ *               example: "BUPL0PY"
  *             Name:
  *               type: string
  *               description: Nombre del deportista
- *               example: "Wilmer Maza"
+ *               example: "Maza"
+ *             LastName:
+ *               type: string
+ *               description: Apellido del deportista
+ *               example: "Maza"
  *             Numero_Sorteo:
  *               type: integer
  *               description: Número de sorteo del deportista
@@ -354,15 +372,6 @@ router.put("/AthleteUpdate/:idAthlete", async (req: Request, res: Response) => {
  *           description: Fecha de última actualización del registro
  *           example: "2024-05-18T06:43:07.157Z"
  * 
- *   parameters:
- *     JWTToken:
- *       name: Authorization
- *       in: header
- *       required: true
- *       schema:
- *         type: string
- *         format: jwt
- *       description: Token de autenticación JWT en formato 'Bearer token'.
  * 
  *   responses:
  *     GetAllAthletesResponse:
@@ -373,14 +382,19 @@ router.put("/AthleteUpdate/:idAthlete", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /register/athletes:
+ * /register/athletes/{idPartida}:
  *   get:
  *     tags:
  *       - Athletes
  *     summary: Obtener todos los deportistas
  *     description: Retorna una lista de todos los deportistas registrados.
  *     parameters:
- *       - $ref: '#/components/parameters/JWTToken'
+ *       - in: path
+ *         name: idPartida
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Codigo de Competición / Partida
  *     responses:
  *       200:
  *         description: Lista de deportistas obtenida exitosamente
@@ -412,12 +426,12 @@ router.put("/AthleteUpdate/:idAthlete", async (req: Request, res: Response) => {
  *                   example: "Error interno del servidor"
  */
 
-router.get("/athletes", async (req: Request, res: Response) => {
+router.get("/athletes/:idPartida", async (req: Request, res: Response) => {
   try {
-    console.log("Solicitud recibida:", req);
-
-    console.log("Token JWT recibido:", req.header("Authorization"));
-    const response = await registerService.get(`/AthletesAll`, req.body);
+    const {
+      params: { idPartida },
+    } = req;
+    const response = await registerService.get(`/athletes/${idPartida}`, req.body);
     res.json(response.data);
   } catch (error: any) {
     handleAxiosError(error, req, res);
