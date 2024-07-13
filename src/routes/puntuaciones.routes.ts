@@ -1,7 +1,6 @@
-// src/routes/authRoutes.ts
 import { Request, Response, Router } from "express";
 import handleAxiosError from "../middleware/handleAxiosError";
-import { getSSEPuntuaciones, puntuacionesService } from "../utils/api";
+import { puntuacionesService, getSSEPuntuaciones } from "../utils/api";
 
 const router = Router();
 
@@ -17,8 +16,8 @@ const router = Router();
  *         - Numero_Sorteo
  *         - Birthdate
  *         - IwfCoiCode
- *         - Primer_Envion
- *         - Primer_Arranque
+ *         - tipo
+ *         - numero
  *         - Id_Partida
  *       properties:
  *         Name:
@@ -42,14 +41,14 @@ const router = Router();
  *           type: string
  *           description: Código IWF COI del deportista
  *           example: "asdsad"
- *         Primer_Envion:
+ *         tipo:
+ *           type: string
+ *           description: Tipo de intento del deportista
+ *           example: "Arranque"
+ *         numero:
  *           type: integer
- *           description: Primer envión del deportista
- *           example: 10
- *         Primer_Arranque:
- *           type: integer
- *           description: Primer arranque del deportista
- *           example: 10
+ *           description: Número de intento del deportista
+ *           example: 1
  *         Id_Partida:
  *           type: string
  *           description: Código de competición / Partida
@@ -130,11 +129,16 @@ const router = Router();
  *             $ref: '#/components/schemas/AthleteRequest'
  *     responses:
  *       201:
- *         description: Deportista registrado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AthleteResponse'
+ *          description: Registro creado exitosamente.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     description: Mensaje de confirmación.
+ *                     example: 'Informacion de registro'
  *       400:
  *         description: Error en la solicitud de registro
  *         content:
@@ -145,7 +149,7 @@ const router = Router();
  *                 message:
  *                   type: string
  *                   description: Mensaje de error
- *                   example: "Datos de registro no válidos"
+ *                   example: "Error al crear o actualizar el registro"
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -174,41 +178,29 @@ router.post("/insert", async (req: Request, res: Response) => {
  *   get:
  *     tags:
  *       - Puntuaciones
- *     summary: Actualizar un deportista
- *     description: Actualiza la información de un deportista existente.
+ *     summary: Obtener información de una partida
+ *     description: Obtiene la información de una partida específica según su ID.
  *     parameters:
  *       - in: path
  *         name: partidaId
  *         schema:
  *           type: string
  *         required: true
- *         description: ID del deportista a actualizar
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateAthleteRequest'
+ *         description: ID de la partida de la cual se desea obtener información
  *     responses:
- *       200:
- *         description: Deportista actualizado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UpdateAthleteResponse'
- *       400:
- *         description: Error en la solicitud de actualización
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   description: Mensaje de error
- *                   example: "Datos de actualización no válidos"
+ *          200:
+ *           description: Informacion de partida obtenida exitosamente.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     description: Mensaje de confirmación.
+ *                     example: 'informacion de partida'
  *       404:
- *         description: Deportista no encontrado
+ *         description: Registros de deportistas no encontrada en Id
  *         content:
  *           application/json:
  *             schema:
@@ -216,8 +208,7 @@ router.post("/insert", async (req: Request, res: Response) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Mensaje de error
- *                   example: "Deportista no encontrado"
+ *                   example: "Error al obtener los registros del deportista"
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -227,17 +218,14 @@ router.post("/insert", async (req: Request, res: Response) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Mensaje de error interno
  *                   example: "Error interno del servidor"
  */
-
-
 router.get("/partida/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
       params: { partidaId },
     } = req;
-    const response = await puntuacionesService.get(`puntaciones/partida/${partidaId}`, req.body);
+    const response = await puntuacionesService.get(`puntaciones/partida/${partidaId}`);
     res.json(response.data);
   } catch (error: any) {
     handleAxiosError(error, req, res);
@@ -247,96 +235,78 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * info:
- *   title: Puntaciones API
- *   description: API para manejar eventos de cronómetro para competencias.
- *   version: "1.0.0"
- * servers:
- *   - url: 'https://api.tuservidor.com/'
- *     description: Servidor de producción
- * paths:
- *   /puntuaciones/{platform}/{event}/{partidaId}:
- *     post:
- *       tags:
- *         - Puntuaciones
- *       summary: Controla eventos del cronómetro para una partida específica
- *       description: Permite iniciar, pausar o detener un cronómetro basado en la acción y el ID de la partida proporcionados.
- *       parameters:
- *         - in: path
- *           name: platform
- *           required: true
- *           schema:
- *             type: string
- *           description: Tipo de plataforma (cronometro, platform, Movil).
- *         - in: path
- *           name: event
- *           required: true
- *           schema:
- *             type: string
- *           description: Tipo de evento del cronómetro (start, pause, stop).
- *         - in: path
- *           name: partidaId
- *           required: true
- *           schema:
- *             type: string
- *           description: Identificador único de la partida.
- *       requestBody:
+ * /puntuaciones/{platform}/{event}/{partidaId}:
+ *   post:
+ *     tags:
+ *       - Puntuaciones
+ *     summary: Controla eventos del cronómetro para una partida específica
+ *     description: Permite iniciar, pausar o detener un cronómetro basado en la acción y el ID de la partida proporcionados.
+ *     parameters:
+ *       - in: path
+ *         name: platform
  *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tipo de plataforma (cronometro, platform, Movil).
+ *       - in: path
+ *         name: event
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tipo de evento del cronómetro (start, pause, stop).
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Identificador único de la partida.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       '200':
+ *         description: Operación exitosa
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 timestamp:
+ *                 message:
  *                   type: string
- *                   format: datetime
- *                   description: Tiempo en el que el evento es registrado.
- *                   example: '2021-07-21T17:32:28Z'
- *       responses:
- *         200:
- *           description: Evento del cronómetro procesado correctamente.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     description: Mensaje de confirmación.
- *                     example: 'Evento del cronómetro procesado correctamente.'
- *         400:
- *           description: Error de validación en la entrada.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     description: Un mensaje describiendo qué estaba mal con la entrada.
- *                     example: 'Datos de entrada inválidos.'
- *         500:
- *           description: Error interno del servidor.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     description: Mensaje de error interno.
- *                     example: 'Error procesando la solicitud.'
- *
+ *                   description: Mensaje de confirmación
+ *                   example: Cronómetro iniciado correctamente
+ *       '400':
+ *         description: Error en la solicitud
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error
+ *                   example: Error al iniciar el cronómetro
+ *       '500':
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error interno
+ *                   example: Error interno del servidor
  */
 router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
-      params: { event, partidaId, platform }, body
+      params: { platform, event, partidaId },
     } = req;
-    const response = await puntuacionesService.post(
-      `puntaciones/${platform}/${event}/${partidaId}`,
-      body
-    );
+    const response = await puntuacionesService.post(`/puntaciones/${platform}/${event}/${partidaId}`, req.body);
     res.json(response.data);
   } catch (error: any) {
     handleAxiosError(error, req, res);
@@ -345,88 +315,77 @@ router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) 
 
 /**
  * @openapi
- * info:
- *   title: Putuaciones API
- *   description: API para manejar eventos de cronómetro para competencias, incluyendo SSE para actualizaciones en tiempo real.
- *   version: "1.0.0"
- * servers:
- *   - url: 'https://api.tuservidor.com/'
- *     description: Servidor de producción
- * paths:
- *   /puntuaciones/{platform}/{partidaId}:
- *     get:
- *       tags:
- *         - Puntuaciones
- *       summary: Suscripción a eventos del cronómetro
- *       description: >
- *         Abre un stream de Server-Sent Events que emite actualizaciones del cronómetro en tiempo real para una partida específica.
- *       parameters:
- *         - in: path
- *           name: platform
- *           required: true
- *           schema:
- *             type: string
- *           description: Tipo de plataforma (cronometro, platform, Movil).
- *         - in: path
- *           name: partidaId
- *           required: true
- *           schema:
- *             type: string
- *           description: Identificador único de la partida.
- *       responses:
- *         200:
- *           description: Conexión SSE establecida y eventos siendo transmitidos.
- *           content:
- *             text/event-stream:
- *               schema:
- *                 type: string
- *                 example: |
- *                   data: {"time":"2023-03-29T12:34:56Z","event":"start"}
+ * /puntuaciones/{platform}/{partidaId}:
+ *   get:
+ *     tags:
+ *       - Puntuaciones
+ *     summary: Suscripción a eventos del cronómetro
+ *     description: >
+ *       Abre un stream de Server-Sent Events que emite actualizaciones del cronómetro en tiempo real para una partida específica.
+ *     parameters:
+ *       - in: path
+ *         name: platform
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Tipo de plataforma (cronometro, platform, Movil).
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Identificador único de la partida.
+ *     responses:
+ *       200:
+ *         description: Conexión SSE establecida y eventos siendo transmitidos.
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 data: {"time":"2023-03-29T12:34:56Z","event":"start"}
  * 
- *         400:
- *           description: Error de validación en la entrada.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     description: Un mensaje describiendo qué estaba mal con la entrada.
- *                     example: 'Partida ID inválido o faltante.'
- *         500:
- *           description: Error interno del servidor.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     description: Mensaje de error interno.
- *                     example: 'Error procesando la solicitud.'
+ *       400:
+ *         description: Error de validación en la entrada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Un mensaje describiendo qué estaba mal con la entrada.
+ *                   example: 'Partida ID inválido o faltante.'
+ *       500:
+ *         description: Error interno del servidor.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error interno.
+ *                   example: 'Error procesando la solicitud.'
  * 
  */
-
 router.get("/:platform/:partidaId", async (req: Request, res: Response) => {
-  const { platform, partidaId } = req.params; // Destructuring simplificado
+  const { platform, partidaId } = req.params;
 
-  // Configuración inicial de los headers para SSE
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
   try {
-    // Conectarse al servicio que maneja los SSE y obtener el stream
+
     const response = await getSSEPuntuaciones(`puntaciones/${platform}/${partidaId}`);
 
-    // Reenviar el stream de SSE directamente al cliente
     response.data.pipe(res);
   } catch (error) {
     console.error("SSE streaming failed", error);
     res.status(500).send("Failed to establish a stream.");
   }
 });
-
 
 export default router;
