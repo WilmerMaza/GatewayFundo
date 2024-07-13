@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { urlServeAuth, urlServeCronometer, urlServeRegister } from "./ValidEnvironment";
+import { urlServeAuth, urlServeCronometer, urlServeRegister, urlServerPuntuaciones } from "./ValidEnvironment";
 
 export const authService: AxiosInstance = axios.create({
   baseURL: `${urlServeAuth}/api/auth`, // Cambia esta URL por la de tu servicio de autenticación
@@ -15,6 +15,13 @@ export const registerService: AxiosInstance = axios.create({
   },
 });
 
+export const puntuacionesService: AxiosInstance = axios.create({
+  baseURL: `${urlServerPuntuaciones}/`, // Cambia esta URL por la de tu servicio de autenticación
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export const cronometerService: AxiosInstance = axios.create({
   baseURL: `${urlServeCronometer}/cronometro`, // Cambia esta URL por la de tu servicio de autenticación
   headers: {
@@ -22,14 +29,19 @@ export const cronometerService: AxiosInstance = axios.create({
   },
 });
 
-export function getSSE(path: string, config: any): Promise<AxiosResponse<any, any>> {
-  const sseConfig = {
-    ...config,
-    headers: {
-      ...config.headers,
-      Accept: "text/event-stream",
-    },
-    responseType: "stream", // Importante para manejar la respuesta como un stream
-  };
+
+export const sseConfig: any = {
+  headers: {
+    Accept: "text/event-stream",
+  },
+  responseType: "stream", // Importante para manejar la respuesta como un strea
+}
+
+export function getSSECronometro(path: string): Promise<AxiosResponse<any, any>> {
   return cronometerService.get(path, sseConfig);
+}
+
+
+export function getSSEPuntuaciones(path: string): Promise<AxiosResponse<any, any>> {
+  return puntuacionesService.get(path, sseConfig);
 }

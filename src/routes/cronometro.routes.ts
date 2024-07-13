@@ -1,7 +1,7 @@
 // src/routes/authRoutes.ts
 import { Request, Response, Router } from "express";
 import handleAxiosError from "../middleware/handleAxiosError";
-import { cronometerService, getSSE } from "../utils/api";
+import { cronometerService, getSSECronometro } from "../utils/api";
 
 const router = Router();
 /**
@@ -178,9 +178,7 @@ router.get("/:platform/:partidaId", async (req: Request, res: Response) => {
 
   try {
     // Conectarse al servicio que maneja los SSE y obtener el stream
-    const response = await getSSE(`/${platform}/${partidaId}`, {
-      responseType: "stream", // Asegura que Axios maneje la respuesta como un stream
-    });
+    const response = await getSSECronometro(`/${platform}/${partidaId}`);
 
     // Reenviar el stream de SSE directamente al cliente
     response.data.pipe(res);
