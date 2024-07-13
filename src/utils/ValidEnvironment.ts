@@ -14,3 +14,4 @@ export const urlServeAuth = getEnvironmentVariable("urlServeAuth");
 export const urlServeCronometer = getEnvironmentVariable("urlServeCronometer");
 export const urlServeRegister = getEnvironmentVariable("urlServeRegister");
 export const PORT = getEnvironmentVariable("PORT");
+export const urlServerPuntuaciones = getEnvironmentVariable("urlServerPuntuaciones");

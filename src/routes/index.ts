@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import crometroRouter from "./cronometro.routes";
+import puntuacionesRoutes from "./puntuaciones.routes";
 import registerRoutes from "./register.routes";
 import statusRoutes from "./statusRoutes";
 import userRoutes from "./userRoutes";
@@ -12,5 +13,6 @@ router.use("/status", statusRoutes);
 router.use("/auth", authRoutes);
 router.use("/cronometro", crometroRouter);
 router.use("/register", registerRoutes);
+router.use("/puntuaciones", puntuacionesRoutes);
 
 export default router;
