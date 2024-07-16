@@ -1,15 +1,14 @@
-// src/routes/authRoutes.ts
 import { Request, Response, Router } from "express";
 import handleAxiosError from "../middleware/handleAxiosError";
-import { getSSEPuntuaciones, puntuacionesService } from "../utils/api";
+import { puntuacionesService, getSSEPuntuaciones } from "../utils/api";
 
 const router = Router();
 
 /**
  * @openapi
- * components:
+  components:
  *   schemas:
- *     AthleteRequest:
+ *     RegistroDocument:
  *       type: object
  *       required:
  *         - Name
@@ -17,8 +16,8 @@ const router = Router();
  *         - Numero_Sorteo
  *         - Birthdate
  *         - IwfCoiCode
- *         - Primer_Envion
- *         - Primer_Arranque
+ *         - tipo
+ *         - numero
  *         - Id_Partida
  *       properties:
  *         Name:
@@ -42,20 +41,20 @@ const router = Router();
  *           type: string
  *           description: Código IWF COI del deportista
  *           example: "asdsad"
- *         Primer_Envion:
+ *         tipo:
+ *           type: string
+ *           description: Tipo de intento del deportista
+ *           example: "Arranque"
+ *         numero:
  *           type: integer
- *           description: Primer envión del deportista
- *           example: 10
- *         Primer_Arranque:
- *           type: integer
- *           description: Primer arranque del deportista
- *           example: 10
+ *           description: Número de intento del deportista
+ *           example: 1
  *         Id_Partida:
  *           type: string
  *           description: Código de competición / Partida
  *           example: "BUPL0PY"
  * 
- *     AthleteResponse:
+ *     RegistroDocumentResponse:
  *       type: object
  *       properties:
  *         message:
@@ -94,14 +93,18 @@ const router = Router();
  *               type: string
  *               description: Código IWF COI del deportista
  *               example: "asdsad"
- *             Primer_Envion:
+ *             peso:
  *               type: integer
- *               description: Primer envión del deportista
- *               example: 10
- *             Primer_Arranque:
- *               type: integer
- *               description: Primer arranque del deportista
- *               example: 10
+ *               description: Peso del intento del deportista
+ *               example: 100
+ *             resultado:
+ *               type: string
+ *               enum:
+ *                 - "Éxito"
+ *                 - "Fallo"
+ *                 - "Evaluar"
+ *               description: Resultado del intento del deportista
+ *               example: "Éxito"
  *             updatedAt:
  *               type: string
  *               format: date-time
@@ -116,6 +119,7 @@ const router = Router();
 
 /**
  * @openapi
+ * 
  * /puntuaciones/insert:
  *   post:
  *     tags:
@@ -127,14 +131,19 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/AthleteRequest'
+ *             $ref: '#/components/schemas/RegistroDocument'
  *     responses:
  *       201:
- *         description: Deportista registrado exitosamente
+ *         description: Registro creado exitosamente.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AthleteResponse'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de confirmación.
+ *                   example: 'Informacion de registro'
  *       400:
  *         description: Error en la solicitud de registro
  *         content:
@@ -145,7 +154,7 @@ const router = Router();
  *                 message:
  *                   type: string
  *                   description: Mensaje de error
- *                   example: "Datos de registro no válidos"
+ *                   example: "Error al crear o actualizar el registro"
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -174,41 +183,29 @@ router.post("/insert", async (req: Request, res: Response) => {
  *   get:
  *     tags:
  *       - Puntuaciones
- *     summary: Actualizar un deportista
- *     description: Actualiza la información de un deportista existente.
+ *     summary: Obtener información de una partida
+ *     description: Obtiene la información de una partida específica según su ID.
  *     parameters:
  *       - in: path
  *         name: partidaId
  *         schema:
  *           type: string
  *         required: true
- *         description: ID del deportista a actualizar
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateAthleteRequest'
+ *         description: ID de la partida de la cual se desea obtener información
  *     responses:
  *       200:
- *         description: Deportista actualizado exitosamente
+ *         description: Informacion de partida obtenida exitosamente.
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UpdateAthleteResponse'
- *       400:
- *         description: Error en la solicitud de actualización
- *         content:
- *           application/json:
- *             schema:
+ *             schema: 
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Mensaje de error
- *                   example: "Datos de actualización no válidos"
+ *                   description: Mensaje de confirmación.
+ *                   example: 'informacion de partida'
  *       404:
- *         description: Deportista no encontrado
+ *         description: Registros de deportistas no encontrada en Id
  *         content:
  *           application/json:
  *             schema:
@@ -216,8 +213,7 @@ router.post("/insert", async (req: Request, res: Response) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Mensaje de error
- *                   example: "Deportista no encontrado"
+ *                   example: "Error al obtener los registros del deportista"
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -227,11 +223,8 @@ router.post("/insert", async (req: Request, res: Response) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Mensaje de error interno
  *                   example: "Error interno del servidor"
  */
-
-
 router.get("/partida/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
@@ -246,7 +239,7 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
 
 
 /**
- * @openapi
+ @openapi
  * info:
  *   title: Puntaciones API
  *   description: API para manejar eventos de cronómetro para competencias.
@@ -259,8 +252,8 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
  *     post:
  *       tags:
  *         - Puntuaciones
- *       summary: Controla eventos del cronómetro para una partida específica
- *       description: Permite iniciar, pausar o detener un cronómetro basado en la acción y el ID de la partida proporcionados.
+ *       summary: Controla  la notificacion de eventos  de una  una partida específica
+ *       description: Notificacion de evento  de una partida específica
  *       parameters:
  *         - in: path
  *           name: platform
@@ -328,7 +321,7 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
  *                     example: 'Error procesando la solicitud.'
  *
  */
-router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
+ router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
       params: { event, partidaId, platform }, body
@@ -342,7 +335,6 @@ router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) 
     handleAxiosError(error, req, res);
   }
 });
-
 /**
  * @openapi
  * info:
