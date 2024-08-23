@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import handleAxiosError from "../middleware/handleAxiosError";
-import { puntuacionesService, getSSEPuntuaciones } from "../utils/api";
+import { getSSEPuntuaciones, puntuacionesService } from "../utils/api";
 
 const router = Router();
 
@@ -239,6 +239,71 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
 
 
 /**
+ * @openapi
+ * /puntuaciones/download/{partidaId}:
+ *   get:
+ *     tags:
+ *       - Puntuaciones
+ *     summary: Obtener información de una partida
+ *     description: Obtiene la información de una partida específica según su ID.
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID de la partida de la cual se desea obtener información
+ *     responses:
+ *       200:
+ *         description: Informacion de partida obtenida exitosamente.
+ *         content:
+ *           application/json:
+ *             schema: 
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de confirmación.
+ *                   example: 'informacion de partida'
+ *       404:
+ *         description: Registros de deportistas no encontrada en Id
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error al obtener los registros del deportista"
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error interno del servidor"
+ */
+router.get("/download/:partidaId", async (req: Request, res: Response) => {
+  try {
+    const {
+      params: { partidaId },
+    } = req;
+    const configHeader: any = {
+      headers: {
+        Accept: "application/octet-stream",
+      }
+    }
+    const response = await puntuacionesService.get(`registros/${partidaId}/descargar-informe`, configHeader);
+    res.json(response.data);
+  } catch (error: any) {
+    handleAxiosError(error, req, res);
+  }
+});
+
+/**
  @openapi
  * info:
  *   title: Puntaciones API
@@ -321,7 +386,7 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
  *                     example: 'Error procesando la solicitud.'
  *
  */
- router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
+router.post("/:platform/:event/:partidaId", async (req: Request, res: Response) => {
   try {
     const {
       params: { event, partidaId, platform }, body
@@ -335,6 +400,167 @@ router.get("/partida/:partidaId", async (req: Request, res: Response) => {
     handleAxiosError(error, req, res);
   }
 });
+
+
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     UpdateAthleteRequest:
+ *       type: object
+ *       required:
+ *         - Name
+ *         - Numero_Sorteo
+ *         - Birthdate
+ *         - IwfCoiCode
+ *         - Primer_Envion
+ *         - Primer_Arranque
+ *       properties:
+ *         Name:
+ *           type: string
+ *           description: Nombre del deportista
+ *           example: "Wilmer Maza"
+ *         Numero_Sorteo:
+ *           type: integer
+ *           description: Número de sorteo del deportista
+ *           example: 15
+ *         Birthdate:
+ *           type: string
+ *           format: date
+ *           description: Fecha de nacimiento del deportista
+ *           example: "2002-01-10"
+ *         IwfCoiCode:
+ *           type: string
+ *           description: Código IWF COI del deportista
+ *           example: "asdsad"
+ *         Primer_Envion:
+ *           type: integer
+ *           description: Primer envión del deportista
+ *           example: 10
+ *         Primer_Arranque:
+ *           type: integer
+ *           description: Primer arranque del deportista
+ *           example: 10
+ * 
+ *     UpdateAthleteResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Mensaje de confirmación
+ *           example: "Usuario actualizado exitosamente"
+ *         athlete:
+ *           type: object
+ *           properties:
+ *             ID:
+ *               type: string
+ *               description: ID del deportista
+ *               example: "f097f3a6-ade0-4e95-995f-7989fda2da4f"
+ *             Name:
+ *               type: string
+ *               description: Nombre del deportista
+ *               example: "Alfonso Maza"
+ *             Numero_Sorteo:
+ *               type: integer
+ *               description: Número de sorteo del deportista
+ *               example: 15
+ *             Birthdate:
+ *               type: string
+ *               format: date
+ *               description: Fecha de nacimiento del deportista
+ *               example: "2002-01-10"
+ *             IwfCoiCode:
+ *               type: string
+ *               description: Código IWF COI del deportista
+ *               example: "asdsad"
+ *             Primer_Envion:
+ *               type: integer
+ *               description: Primer envión del deportista
+ *               example: 10
+ *             Primer_Arranque:
+ *               type: integer
+ *               description: Primer arranque del deportista
+ *               example: 10
+ */
+
+/**
+ * @openapi
+ * /puntuaciones/AthleteUpdate/{idAthlete}:
+ *   put:
+ *     tags:
+ *       - Puntuaciones
+ *     summary: Actualizar un deportista
+ *     description: Actualiza la información de un deportista existente.
+ *     parameters:
+ *       - in: path
+ *         name: idAthlete
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID del deportista a actualizar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateAthleteRequest'
+ *     responses:
+ *       200:
+ *         description: Deportista actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UpdateAthleteResponse'
+ *       400:
+ *         description: Error en la solicitud de actualización
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error
+ *                   example: "Datos de actualización no válidos"
+ *       404:
+ *         description: Deportista no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error
+ *                   example: "Deportista no encontrado"
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje de error interno
+ *                   example: "Error interno del servidor"
+ */
+
+
+router.put("/AthleteUpdate/:idAthlete", async (req: Request, res: Response) => {
+  try {
+    const {
+      params: { idAthlete },
+    } = req;
+    const response = await puntuacionesService.put(`puntaciones/ActualizacionPeso/${idAthlete}`, req.body);
+    res.json(response.data);
+  } catch (error: any) {
+    handleAxiosError(error, req, res);
+  }
+});
+
+
 /**
  * @openapi
  * info:
@@ -419,6 +645,9 @@ router.get("/:platform/:partidaId", async (req: Request, res: Response) => {
     res.status(500).send("Failed to establish a stream.");
   }
 });
+
+
+
 
 
 export default router;
